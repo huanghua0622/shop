@@ -1,0 +1,48 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: 22750
+ * Date: 2017/6/3
+ * Time: 19:04
+ */
+//命名空间
+namespace Admin\Controller;
+use Think\Controller;
+class CommonController extends Controller
+{
+
+    public function __construct()
+    {
+        //先调用父类的构造函数
+        parent::__construct();
+        //判断是否登录
+        if(!session('?manager_user')){
+            $this->error('请先登录',U('Admin/Login/login'));
+        }
+        $this->getNav();
+        //dump($this->getNav());die;
+    }
+    public function getNav(){
+        if(session('?top_nav') && session('second_nav')){
+            return;
+        }
+        $role_id = session('manager_user.role_id');
+        if($role_id == 1){
+            $top = M('Auth') -> where("pid = 0") -> select();
+            $second = M('Auth') -> where("pid > 0") -> select();
+//            dump($second);die;
+        }else{
+            $role = M('Role')->find($role_id);
+            $role_auth_ids = $role['role_auth_ids'];
+            //获取顶级权限
+            $top = M('Auth')->where("pid = 0 and id in($role_auth_ids)")->select();
+//            dump($top);die;
+            $second = M('Auth')->where("pid > 0 and id in($role_auth_ids)")->select();
+        }
+//        $this->assign('top',$top);
+//        $this->assign('second',$second);
+        session('top_nav',$top);
+        session('second_nav',$second);
+
+    }
+}
