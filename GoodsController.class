@@ -1,0 +1,319 @@
+<?php
+namespace Admin\Controller;
+use Think\Controller;
+// use Admin\Model\GoodsModel;
+class GoodsController extends CommonController{
+
+	public function goods_list(){
+		//查询数据表中的总记录数
+		$model = D('Goods');
+		$total = $model -> count();
+		//每页显示条数
+		$pagesize = 2;
+		//使用分页类Page 来完成分页功能
+		$page = new \Think\Page($total, $pagesize);
+		//自定义属性和配置
+		$page -> rollPage = 2;
+		$page -> lastSuffix = false;
+		$page -> setConfig('prev','上一页');
+		$page -> setConfig('next','下一页');
+		$page -> setConfig('first','首页');
+		$page -> setConfig('last','尾页');
+		$page -> setConfig('theme','%HEADER% %FIRST% %UP_PAGE% %LINK_PAGE% %DOWN_PAGE% %END%');
+		//获取分页栏的html代码
+		$page_html = $page -> show();
+		$this -> assign('page_html', $page_html);
+		//查询每页显示的数据
+		$data = $model -> limit($page -> firstRow, $page -> listRows) -> select();
+		$this -> assign('data', $data);
+		$this->display();
+	}
+
+	public function goods_add(){
+		//一个方法完成两个业务逻辑：展示页面和处理form表单提交
+		//这两个逻辑可以从请求方式的不同来区分
+		if(IS_POST){
+			//post请求处理表单
+			//接收表单提交的数据
+			// dump($_POST);
+			$data = I('post.');
+			// dump($data);
+			//查看多文件上传时$_FILES
+			// dump($_FILES);die;
+			//需要对goods_introduce字段做特殊处理(以下两种二选一)
+			$data['goods_introduce'] = remove_xss($_POST['goods_introduce']);
+			// dump($data);die;
+			// $data['goods_introduce'] = I('post.goods_introduce', '', 'remove_xss');
+
+			// dump($data);die;
+			// $data['goods_create_time'] = time();
+			//实例化模型类
+			$model = D('Goods');
+
+			//把图片上传的功能放到create方法之前
+
+			//商品图片上传
+			// dump($_FILES);die;
+			//判断当前上传的文件的error信息是否为0
+			if($_FILES['goods_img']['error'] == 0){
+				//没有错误，可以上传
+				//直接调用模型中封装的方法
+				$data = $model -> upload_logo($_FILES, $data);
+				if(!$data){
+					$this -> error('上传失败');
+				}
+			}
+
+			//使用create方法创建数据集
+			if(!$model -> create($data)){
+				//获取模型的错误信息
+				$error = $model -> getError();
+				$this -> error($error);
+			}
+
+
+			//create方法最终效果：$model -> goods_name = $data['name'];
+			//调用add方法完成添加
+			$res = $model -> add();
+			//判断添加结果
+			if($res){
+				//添加成功，跳转到列表页或者添加页
+				//删除$_FILES里面的goods_img字段,不建议直接操作$_FILES ,可以重新赋值一个变量
+				$files = $_FILES;
+				unset($files['goods_img']);
+				//调用模型的upload_pics方法，传入参数文件数组和商品id 这里是$res
+				//调用成功之后的返回值，可以不关心
+				$model -> upload_pics($files, $res);
+				//商品添加成功之后，完成相册图片的上传操作  使用Upload类完成上传
+				//把多文件上传的功能封装到Goods模型中一个方法 upload_pics方法
+
+				// $this -> redirect('Admin/Goods/goods_list');
+				$this -> success('添加成功', U('Admin/Goods/goods_list'));
+				// $this -> error('添加失败，请重试');
+			}else{
+				//添加失败，跳回添加页
+				$this -> error('添加失败，请重试');
+			}
+		}else{
+			//认为是get请求，展示页面
+			$this->display();
+		}
+		//实例化模型
+		// $model = M('Goods');
+		//准备要添加的数据
+		// $data = array('goods_name' => 'test add 1','goods_price'=>100);
+		//调用add方法完成添加操作
+		// $res = $model -> add($data);
+
+		//一次添加多条数据，需要准备一个多维数组
+		// $dataAll = array(
+		// 	array('goods_name' => 'test add 2','goods_price'=>100),
+		// 	array('goods_name' => 'test add 3','goods_price'=>100),
+		// 	);
+		//调用addAll方法完成添加
+		// $res = $model -> addAll($dataAll);
+
+		//AR方式添加操作
+		//以属性的方式设置要添加的数据
+		// $model -> goods_name = 'test add 4';
+		// $model -> goods_price = 100;
+		//调用add方法完成添加
+		// $res = $model -> add();
+		// dump($res);die;
+	}
+
+	public function goods_edit(){
+		//一个方法处理两个业务逻辑 展示页面和处理表单
+		//修改操作
+		//数组方式修改
+		// $model = M('Goods');
+		//准备要修改的数据
+		// $data = array('id'=>16, 'goods_name'=>'test edit 16');
+		//使用save方法完成修改操作
+		// $res = $model -> save($data);
+
+		//AR方式
+		//以属性的方式设置要修改的数据
+		// $model -> id = 16;
+		// $model -> goods_name = 'test ar edit 16';
+		//调用save方法完成修改
+		// $res = $model -> save();
+
+		// dump($res);die;
+		//实例化模型 （使用D函数实例化）
+		$model = D('Goods');
+		if(IS_POST){
+			//处理post表单提交
+			$data = I('post.');
+			//调用save方法完成修改
+			// $res = $model -> save($data);
+
+			//对商品描述字段做特殊处理 防范xss攻击 使用htmlpurifier
+			$data['goods_introduce'] = I('post.goods_introduce', '', 'remove_xss');
+
+			// 获取旧图片地址，用于后续的删除旧图片操作
+			$goods = $model -> find($data['id']);
+
+			//图片上传功能
+			//设置一个标志位,用来后面删除旧图片做判断
+			$flag = 0;
+			if($_FILES['goods_img']['error'] == 0){
+				//直接调用模型中封装的方法
+				$data = $model -> upload_logo($_FILES, $data);
+				if(!$data){
+					$this -> error('上传失败');
+				}
+				$flag = 1;
+			}
+			//使用create方法自动创建数据集（才可以使用字段映射等功能）
+			if(! $model -> create($data) ){
+				//创建失败，获取错误信息
+				$error = $model -> getError();
+				$this -> error($error);
+			}
+			// dump($model);die;
+			//调用save方法完成修改（前面使用了create,save就不需要传递参数）
+			$res = $model -> save();
+			if($res !== false){
+				//修改成功
+				if($flag){
+					//删除旧图片 需要获取原始图片在数据库中保存的路径
+					//删除大图
+					unlink(WEB_ROOT . $goods['goods_big_img']);
+					//删除缩略图
+					unlink(WEB_ROOT . $goods['goods_small_img']);
+				}
+				//上传相册图片
+				//调用Goods模型中的upload_pics方法 ，传递文件数组 和商品id
+				//文件数组$_FILES中也还有goods_img字段，也是需要先删除
+				//另外一种方式，只需要保证$files 结构 和$_FILES保持一直
+				// dump($_FILES);die;
+				$files = array($_FILES['goods_pics']);
+				$model -> upload_pics($files, $data['id']);
+
+				$this -> success('修改成功', U('Admin/Goods/goods_list'));
+			}else{
+				//修改失败
+				$this -> error('修改失败，请重试');
+			}
+		}else{
+			//接收get请求中的id参数
+			$id = I('get.id');
+			//查询$id对应的商品信息
+			$goods = $model -> find($id);
+			$this -> assign('goods', $goods);
+
+			//查询商品的相册图片
+			$goods_pics = M('Goodspics') -> where(array('goods_id' => $id)) -> select();
+			$this -> assign('goods_pics', $goods_pics);
+			$this->display();
+		}
+		
+	}
+	public function goods_detail(){
+		$id = I('get.id');
+		//查询当前商品的信息
+		$model = D('Goods');
+		$goods = $model -> find($id);
+		$this -> assign('goods', $goods);
+		//获取highcharts图表需要的数据信息
+		//先确定最终要组装的数据格式
+		$data_arr = array(
+			array('name'=>'online','data'=>array()),
+			array('name'=>'offline','data'=>array()),
+		);
+		//获取online的数据
+		$online_model = M('Saleonline');
+		$online_data = $online_model -> where(array( 'goods_id' => $id )) -> order('month asc') -> select();
+		foreach($online_data as $k => $v){
+			$data_arr[0]['data'][] = floatval($v['money']);
+		}
+		unset($k);
+		unset($v);
+		//获取offline的数据
+		$offline_model = M('Saleoffline');
+		$offline_data = $offline_model -> where(array( 'goods_id' => $id )) -> order('month asc') -> select();
+		foreach($offline_data as $k => $v){
+			$data_arr[1]['data'][] = floatval($v['money']);
+		}
+		// dump($data_arr);die;
+		//转化数组为json字符串
+		$data_json = json_encode($data_arr);
+		$this -> assign('data_json', $data_json);
+		$this->display();
+	}
+
+	public function goods_delete(){
+		//删除操作
+		//删除条件
+		// $id = 16;
+		$id = I('get.id');
+		//实例化模型
+		$model = M('Goods');
+		//调用delete方法删除数据
+		$res = $model -> delete($id);
+		// dump($res);
+		if($res !== false){
+			$this -> success('删除成功',U('Admin/Goods/goods_list'));
+		}else{
+			$this -> error('删除失败，请重试');
+		}
+	}
+	//ajax分页的列表页展示
+	public function lists(){
+		$this -> display();
+	}
+
+	public function goods_ajax(){
+		//接收ajax请求 ， 查询数据 ，返回数据
+		$nowPage = I('get.nowPage');
+		//实例化Goods模型
+		$model = D('Goods');
+		$pagesize = 5;
+		$offset = ($nowPage - 1) * $pagesize;
+		//查询数据
+		$data = $model -> limit($offset, $pagesize) -> select();
+		//获取总页数
+		//先获取总记录数
+		$total = $model -> count();
+		$totalPage = ceil($total / $pagesize);
+		//返回数据（json格式的数据） 通常包括 code  msg  data 三大部分
+		$return = array(
+			'code' => 10000,
+			'msg' => 'success',
+			'data' => $data,
+			'totalPage' => $totalPage
+		);
+		// echo json_encode($data);
+		//控制器中ajaxReturn方法 ，返回的就是json格式数据
+		$this -> ajaxReturn($return);
+	}
+
+	//删除相册图片 ajax请求
+	public function delete_pics(){
+		$id = I('get.id');
+		//获取已有的图片
+		$pics = M('Goodspics') -> find($id);
+		//删除表中的记录
+		$res = M('Goodspics') -> delete($id);
+		if($res !== false){
+			//删除成功,删除旧图片
+			unlink(WEB_ROOT . $pics['pics_origin']);
+			unlink(WEB_ROOT . $pics['pics_big']);
+			unlink(WEB_ROOT . $pics['pics_mid']);
+			unlink(WEB_ROOT . $pics['pics_sma']);
+			//返回值
+			$return = array(
+				'code' => 10000,
+				'msg' => 'success'
+			);
+		}else{
+			//返回值
+			$return = array(
+				'code' => 10001,
+				'msg' => 'fail'
+			);
+		}
+		$this -> ajaxReturn($return);
+	}
+}
