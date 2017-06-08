@@ -1,0 +1,22 @@
+ //全选&反选
+    $('.chk').click(function(){
+    	var status = $(this).attr('checked');
+    	if(status == 'checked'){
+    		$(this).parent().parent().find("td:eq(1)").find("input").attr("checked","checked");
+    	}else{
+    		$(this).parent().parent().find("td:eq(1)").find("input").removeAttr("checked");
+    	}
+    });
+    //补选父级
+    $('.child').click(function(){
+    	var currentChildStatus = $(this).attr('checked');
+    	var _parent = $(this).parent().parent().find("td:eq(0)").find("input");
+    	if(currentChildStatus == 'checked'){
+    		_parent.attr("checked","checked");
+    	}else{
+    		var selectChkBox = $(this).parent().find(":checkbox:checked");
+    		if(selectChkBox.length == '0'){
+    			_parent.removeAttr("checked");
+    		}
+    	}
+    });
