@@ -1,0 +1,59 @@
+<?php 
+namespace Home\Controller;
+
+use Think\Controller;
+
+class UserController extends Controller{
+    public function register(){
+        layout(false);
+//        $data = I('post.');
+//        //dump($data);die();
+//        //echo 12;
+//        $model = M('user');
+//        $model->add();
+        $this->display();
+    }
+	public function login(){
+        layout(false);
+		$this->display();
+	}
+	public function ajaxregister()
+    {
+        $data = I('post.');
+        if($data['email']){
+            $data['username'] = $data['email'];
+        }else{
+            $data['username'] = $data['phone'];
+        }
+        $model = D("User");
+        if(!$model -> create($data)){
+            //整合数据是 为了在模板中实用自动生成和自动验证
+            $error = $model->getError();
+            $return = array(
+              'code'=>10001,
+                'msg'=>$error,
+            );
+            $this->ajaxreturn($return);
+        }
+        $res = $model->add();
+        if($res){
+            //注册成功
+            $return = array(
+              'code' => 10000,
+                'msg' => 'success',
+            );
+            $this->ajaxreturn($return);
+        }else{
+            $return = array(
+                'code' => 10002,
+                'msg' => '注册失败',
+            );
+            $this->ajaxreturn($return);
+        }
+    }
+
+}
+
+
+
+ ?>
