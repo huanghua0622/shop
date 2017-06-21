@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>后台管理系统</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/Admin/css/main.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/Admin/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="__PUBLIC__/Admin/css/bootstrap-responsive.min.css">
+    <script type="text/javascript" charset="utf-8" src="__PUBLIC__/Admin/ueditor/ueditor.config.js"></script>
+    <script type="text/javascript" charset="utf-8" src="__PUBLIC__/Admin/ueditor/ueditor.all.min.js"></script>
+    <!--建议手动加在语言，避免在ie下有时因为加载语言失败导致编辑器加载失败-->
+    <!--这里加载的语言文件会覆盖你在配置项目里添加的语言类型，比如你在配置项目里配置的是英文，这里加载的中文，那最后就是中文-->
+    <script type="text/javascript" charset="utf-8" src="__PUBLIC__/Admin/ueditor/lang/zh-cn/zh-cn.js"></script>
+</head>
+<body>
+<include file="Common/header"/>
+<!-- 右 -->
+<div class="content">
+    <div class="header">
+        <h1 class="page-title">商品编辑</h1>
+    </div>
+
+    <!-- edit form -->
+    <form action="__SELF__" method="post" id="tab" enctype="multipart/form-data">
+        <ul class="nav nav-tabs">
+            <li role="presentation" class="active"><a href="#basic" data-toggle="tab">基本信息</a></li>
+            <li role="presentation"><a href="#desc" data-toggle="tab">商品描述</a></li>
+            <li role="presentation"><a href="#attr" data-toggle="tab">商品属性</a></li>
+            <li role="presentation"><a href="#pics" data-toggle="tab">商品相册</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane fade in active" id="basic">
+                <div class="well">
+                    <input type="hidden" value="{$data.id}" name="id" id="goods_id">
+                    <label>商品名称：</label>
+                    <input type="text" name="name" value="{$data.goods_name}" class="input-xlarge">
+                    <label>商品价格：</label>
+                    <input type="text" name="price" value="{$data.goods_price}" class="input-xlarge">
+                    <label>商品数量：</label>
+                    <input type="text" name="number" value="{$data.goods_number}" class="input-xlarge">
+                    <label>商品logo：</label>
+                    <input type="file" name="goods_img" value="{$data.goods_big_img}" class="input-xlarge">
+                </div>
+            </div>
+            <div class="tab-pane fade in" id="desc">
+                <div class="well">
+                    <label>商品简介：</label>
+                    <textarea id="ueditor" name="goods_introduce" style="height: 250px;width: 500px">{$data.goods_introduce}</textarea>
+                </div>
+            </div>
+            <div class="tab-pane fade in" id="attr">
+                <div class="well">
+                    <label>商品分类：</label>
+                    <select name="type_id" id="type_select" class="input-xlarge">
+                        <option value="0">==请选择==</option>
+                        <volist name="types" id="val" key="key">
+                            <option value="{$val.type_id}" <if condition="$val.type_id == $data.type_id ">selected='selected'</if>>{$val.type_name}</option>
+                        </volist>
+                    </select>
+                    <div id="attr_div">
+                        <volist name="attrs" id="attrs_val">
+                            <label>{$attrs_val.attr_name}：</label>
+                            <if condition="$attrs_val.attr_input_type == 2 ">
+                                <volist name="attrs_val['attr_values']" id="vol" key="key">
+                                    <input type="checkbox" name="attr_name[{$attrs_val.attr_id}][]" <in name="vol" value="$new_attr_value[$attrs_val['attr_id']]">checked='checked' </in> value="{$vol}">{$vol}
+                                </volist>
+                            </if>
+                            <if condition="$attrs_val.attr_input_type == 1 ">
+                                <select name="attr_name[{$attrs_val.attr_id}][]" id="">
+                                    <volist name="attrs_val['attr_values']" id="vol">
+                                    <option value="{$vol}" <in name="vol" value="$new_attr_value[$attrs_val['attr_id']]">selected="selected" </in> >{$vol}</option>
+                                    </volist>
+                                </select>
+                            </if>
+                            <if condition="$attrs_val.attr_input_type == 0 ">
+                                <input type="text" name="attr_name[{$attrs_val.attr_id}][]" value="{$new_attr_value[$attrs_val['attr_id']]}">
+                            </if>
+                        </volist>
+                        <!--<label>商品品牌：</label>-->
+                        <!--<input type="text" value="edit" class="input-xlarge">-->
+                        <!--<label>商品型号：</label>-->
+                        <!--<input type="text" value="edit" class="input-xlarge">-->
+                        <!--<label>商品重量：</label>-->
+                        <!--<input type="text" value="edit" class="input-xlarge">-->
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade in" id="pics">
+                <volist name="goods_res" id="val">
+                    <div><img src="{$val.pics_mid}" alt=""><a href="javascript:void(0);" data-id="{$val.id}"
+                                                              class="div_pics_mid">删除</a></div>
+                </volist>
+                <div class="well">
+                    <div>[<a href="javascript:void(0);" class="add">+</a>]商品图片：<input type="file" name="goods_pics[]"
+                                                                                      value="" class="input-xlarge">
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primary" type="submit">保存</button>
+        </div>
+    </form>
+    <!-- footer -->
+    <footer>
+        <hr>
+        <p>© 2017 <a href="javascript:void(0);" target="_blank">ADMIN</a></p>
+    </footer>
+</div>
+</body>
+<!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+<!--[if lt IE 9]>
+<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+<script src="__PUBLIC__/Admin/js/jquery-1.8.1.min.js"></script>
+<script src="__PUBLIC__/Admin/js/bootstrap.min.js"></script>
+<script src="__PUBLIC__/Admin/js/tanchu.js"></script>
+<script type="text/javascript">
+    $(function () {
+        $('.add').click(function () {
+            var add_div = '<div>[<a href="javascript:void(0);"" class="sub">-</a>]商品图片：<input type="file" name="goods_pics[]" value="" class="input-xlarge"></div>';
+            $(this).parent().after(add_div);
+        });
+        $('.sub').live('click', function () {
+            $(this).parent().remove();
+        });
+
+        $('#type_select').on('change',function () {
+            var type_id = $(this).val();
+            var goods_id = $('#goods_id').val();
+//            console.log(goods_id);
+//            if (type_id==0){
+//                $('#attr_div').html('');
+//                return;
+//            }
+            $.ajax({
+                'url':'__CONTROLLER__/edit_getattr',
+                'type':'post',
+                'data':{'type_id':type_id,'goods_id':goods_id},
+                'dataType':'json',
+                'success':function (res) {
+                    if(res.code !== 10000){
+                        alert(res.msg);
+                        return;
+                    }else{
+                        var attr_data = res.attrs;
+                        var goods_attr = res.goods_attr;
+                        str='';
+                        $.each(attr_data,function (ai,av) {
+                                str+="<label>"+av.attr_name+"</label>";
+                                if (av.attr_input_type==0){
+                                    inputStr = "<input type='text' name='attr_name[" + av.attr_id + "][]'  class='input-xlarge'/>";
+                                    $.each(goods_attr,function (gi,gv) {
+                                        if (av.attr_id == gv.attr_id) {
+                                            inputStr = "<input type='text' name='attr_name[" + av.attr_id + "][]' value='" + gv.attr_value + "' class='input-xlarge'/>"
+                                        }
+//                                        else if(av.attr_id != gv.attr_id){
+//                                            str += "<input type='text' name='attr_name[" + av.attr_id + "][]'  class='input-xlarge'/>"
+//                                        }
+
+                                    })
+                                    str += inputStr;
+                                }else if(av.attr_input_type==1){
+                                    str+="<select name='attr_name["+av.attr_id+"][]'>";
+                                    $.each(av.attr_values.split(','),function (index,value) {
+                                        inputOp= "<option value='" + value + "'  >" + value + "</option>";
+                                        $.each(goods_attr,function (gi,gv) {
+                                            if (av.attr_id == gv.attr_id) {
+                                                if(value == gv.attr_value ){
+                                                    inputOp= "<option value='" + value + "' selected='selected' >" + value + "</option>";
+                                                }
+                                            }
+                                        })
+                                        str+=inputOp;
+                                    })
+                                    str+="</select>";
+                                }else{
+                                    $.each(av.attr_values.split(','),function (index,value) {
+                                        inputCheck="<input type='checkbox' value='"+value+"' name='attr_name["+av.attr_id+"][]' />"+value;
+                                        $.each(goods_attr,function (gi,gv) {
+                                            if (av.attr_id == gv.attr_id) {
+                                                if(value == gv.attr_value ){
+                                                    inputCheck= "<input type='checkbox' checked='checked' value='"+value+"' name='attr_name["+av.attr_id+"][]' />"+value;
+                                                }
+                                            }
+                                        })
+                                        str+=inputCheck;
+                                    })
+                                }
+                        });
+                        $('#attr_div').html(str);
+                    }
+                }
+            });
+        })
+//        $('option[value=15]').attr('selected','selected');
+
+
+        $('.div_pics_mid').on('click', function () {
+            var pic_id = $(this).attr('data-id');
+//            alert(pic_id);
+            var that = $(this);
+            $.ajax({
+                'url': '__CONTROLLER__/delete_goods_edit_pic',
+                'type': 'get',
+                'data': 'pic_id=' + pic_id,
+                'dataType': 'json',
+                'success': function (res) {
+                    if (res.code == 1000) {
+                        that.parent().remove().tanchu(res.msg);
+                        return;
+                    } else {
+                        alert(res.msg);
+                        return;
+                    }
+                }
+            })
+        })
+    });
+    var ue = UE.getEditor('ueditor');
+</script>
+</html>

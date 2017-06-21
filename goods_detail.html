@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>后台管理系统</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="">
+<meta name="author" content="">
+<link rel="stylesheet" type="text/css" href="__PUBLIC__/Admin/css/main.css">
+<link rel="stylesheet" type="text/css" href="__PUBLIC__/Admin/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="__PUBLIC__/Admin/css/bootstrap-responsive.min.css">
+<script src="__PUBLIC__/Admin/highcharts/highcharts.js"></script>
+<script src="__PUBLIC__/Admin/modules/exporting.js"></script>
+
+</head>
+<body>
+<include file="Common/header" />
+<!-- 右 -->
+<div class="content">
+    <div class="header">
+        <h1 class="page-title">商品详情</h1>
+    </div>
+
+    <div class="well">
+        <label>商品名称：</label>
+        <div>{$data.goods_name}</div>
+        <label>商品价格：</label>
+        <div>{$data.goods_price}</div>
+        <label>商品数量：</label>
+        <div>{$data.goods_number}</div>
+        <label>商品图片：</label>
+        <div><img src="{$data.goods_small_img}"></div>
+        <label>商品简介：</label>
+        <div>{$data.goods_introduce}</div>
+        <label>月销售额：</label>
+        <div id="container" style="min-width: 400px;height: 400px"></div>
+    </div>
+    <!-- footer -->
+    <footer>
+        <hr>
+        <p>© 2017 <a href="javascript:void(0);" target="_blank">ADMIN</a></p>
+    </footer>
+</div>
+</body>
+<!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+<!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+<script src="__PUBLIC__/Admin/js/jquery-1.8.1.min.js"></script>
+<script src="__PUBLIC__/Admin/js/bootstrap.min.js"></script>
+<script>
+    var chart  = new Highcharts.Chart('container',{
+        title: {
+            text: '月销售额',
+            x:-20
+        },
+        subtitle: {
+            text: '数据来源: www.ssshop.com',
+            x:-20
+        },
+        xAxis: {
+            categories: ['一月', '二月', '三月', '四月', '五月']
+        },
+        yAxis: {
+            title: {
+                text: '月销售额(万元)'
+            }
+        },
+        plotOptions: {
+            line: {
+                dataLabels: {
+                    enabled: true          // 开启数据标签
+                },
+                enableMouseTracking: false // 关闭鼠标跟踪，对应的提示框、点击事件会失效
+            }
+        },
+        series: {$arrjson}
+    })
+</script>
+</html>
